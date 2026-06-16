@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tide Chart — {{.TargetDate}}</title>
+	
+	<script src="https://cdn.tailwindcss.com"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+	<script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/dist/date-fns.min.js" defer></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns" defer></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0" defer></script>
+</head>
+
+<body class="bg-[#0b0c10] text-[#f4f4f5] flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 antialiased">
+
+	<div id="dashboard" data-payload="{{.Payload}}"
+		class="w-full max-w-4xl bg-[#121318] rounded-2xl p-8 border border-[#1f212a] shadow-[0_24px_48px_-12px_rgba(0,0,0,0.5)]">
+
+		<header class="mb-8 border-b border-[#1f212a] pb-6">
+			<p class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">ZeroHeros Tide Charter</p>
+			<h1 class="text-4xl font-black tracking-tight text-white mb-3">Singapore Tides</h1>
+			<div class="flex items-center gap-2 text-base text-zinc-300">
+				<span>Timeline for</span>
+				<span class="bg-zinc-800 text-white font-bold px-3 py-1 rounded-md font-mono text-sm border border-zinc-600">
+					{{.TargetDate}}
+				</span>
+			</div>
+		</header>
+
+		<div class="relative h-[440px] w-full">
+			<canvas id="tideChart"></canvas>
+		</div>
+
+	</div>
+
+	<script>
+		// The math and loop performance optimizations stay completely intact
+		document.addEventListener('DOMContentLoaded', () => {
+			Chart.register(ChartDataLabels);
+
+			const payloadElement = document.getElementById('dashboard');
+			if (!payloadElement) return;
+
+			const payload = JSON.parse(payloadElement.getAttribute('data-payload'));
+			const targetDay = payload.targetDate;
+
+			const parseTimeToMinutes = (timeString) => {
+				const [hrs, mins] = timeString.split(':').map(Number);
+				return hrs * 60 + mins;
+			};
+
+			const readings = payload.chartData
+				.map(p => ({
+					minutes: parseTimeToMinutes(p.x),
+					height: p.y,
+					rawTime: p.x
+				}))
+				.sort((a, b) => a.minutes - b.minutes);
+
+			const masterTimeline = [...readings];
+			const GAP_MINUTES = 360;
+
+			if (payload.prevTime && payload.prevTime !== "") {
+				masterTimeline.unshift({
+					minutes: parseTimeToMinutes(payload.prevTime) - 1440,
+					height: payload.prevHeight
+				});
+			} else if (readings.length > 1) {
+				const deltaY = readings[1].height - readings[0].height;
+				masterTimeline.unshift({ minutes: readings[0].minutes - GAP_MINUTES, height: readings[0].height + deltaY });
+			} else {
+				masterTimeline.unshift({ minutes: readings[0].minutes - GAP_MINUTES, height: readings[0].height });
+			}
+
+			if (payload.nextTime && payload.nextTime !== "") {
+				masterTimeline.push({
+					minutes: parseTimeToMinutes(payload.nextTime) + 1440,
+					height: payload.nextHeight
+				});
+			} else if (readings.length > 1) {
+				const lastIdx = readings.length - 1;
+				const deltaY = readings[lastIdx].height - readings[lastIdx - 1].height;
+				masterTimeline.push({ minutes: readings[lastIdx].minutes + GAP_MINUTES, height: readings[lastIdx].height + deltaY });
+			} else {
+				const lastIdx = readings.length - 1;
+				masterTimeline.push({ minutes: readings[lastIdx].minutes + GAP_MINUTES, height: readings[lastIdx].height });
+			}
+
+			const denseWaveData = [];
+			const totalMinutesInDay = 24 * 60;
+			const STEP = 4;
+			const PI_FACT = Math.PI;
+
+			const formattedTimes = Array.from({ length: totalMinutesInDay / STEP + 1 }, (_, i) => {
+				const t = i * STEP;
+				const hh = String(Math.floor(t / 60)).padStart(2, '0');
+				const mm = String(t % 60).padStart(2, '0');
+				return `${targetDay}T${hh}:${mm}:00`;
+			});
+
+			let leftIdx = 0;
+			for (let t = 0, arrayIdx = 0; t <= totalMinutesInDay; t += STEP, arrayIdx++) {
+				while (leftIdx < masterTimeline.length - 1 && t > masterTimeline[leftIdx + 1].minutes) {
+					leftIdx++;
+				}
+
+				const left = masterTimeline[leftIdx];
+				const right = masterTimeline[leftIdx + 1];
+
+				const h1 = left.height;
+				const h2 = right.height;
+				const t1 = left.minutes;
+				const t2 = right.minutes;
+
+				const fraction = (t2 - t1) === 0 ? 0 : (t - t1) / (t2 - t1);
+				const height = (h1 + h2) / 2 + (h1 - h2) / 2 * Math.cos(fraction * PI_FACT);
+
+				denseWaveData.push({ x: formattedTimes[arrayIdx], y: height });
+			}
+
+			// Getting the maximum height value from the wave data
+			const yValues = denseWaveData.map(point => point.y);
+			const dynamicMaxHeight = Math.round(Math.max(...yValues) + 1.0);
+
+
+			const markerData = readings.map(r => ({
+				x: `${targetDay}T${r.rawTime}:00`,
+				y: r.height
+			}));
+
+			const ctx = document.getElementById('tideChart').getContext('2d');
+			const oceanGradient = ctx.createLinearGradient(0, 0, 0, 400);
+			oceanGradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); 
+			oceanGradient.addColorStop(0.7, 'rgba(14, 165, 233, 0.1)');
+			oceanGradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+			new Chart(ctx, {
+				type: 'line',
+				data: {
+					datasets: [
+						{
+							label: 'Tide Wave',
+							data: denseWaveData,
+							borderColor: '#0ea5e9',
+							borderWidth: 4,
+							fill: true,
+							backgroundColor: oceanGradient,
+							tension: 0,
+							pointRadius: 0,
+							pointHoverRadius: 0,
+							datalabels: { display: false }
+						},
+						{
+							label: 'Readings',
+							data: markerData,
+							showLine: false,
+							pointBackgroundColor: '#121318',
+							pointBorderColor: '#38bdf8',
+							pointBorderWidth: 3,
+							pointRadius: 7,
+							pointHoverRadius: 9,
+							pointHoverBackgroundColor: '#38bdf8',
+							pointHoverBorderColor: '#ffffff',
+							datalabels: {
+								display: true,
+								align: 'top',
+								offset: 6,
+								color: '#ffffff',
+								font: {
+									family: 'ui-monospace, monospace',
+									size: 12,
+									weight: 'bold'
+								},
+								formatter: (value) => `${value.y.toFixed(2)} m`
+							}
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					maintainAspectRatio: false,
+					animation: false, // <-- CRITICAL
+					scales: {
+						x: {
+							type: 'time',
+							time: {
+								parser: "yyyy-MM-dd'T'HH:mm:ss",
+								unit: 'hour',
+								displayFormats: { hour: 'HH:mm' }
+							},
+							min: `${targetDay}T00:00:00`,
+							max: `${targetDay}T24:00:00`,
+							grid: {
+								color: 'rgba(255, 255, 255, 0.15)',
+								drawTicks: false
+							},
+							ticks: {
+								color: '#e4e4e7',
+								font: { family: 'ui-monospace, monospace', size: 12, weight: '600' },
+								maxTicksLimit: 9
+							},
+							border: { display: false }
+						},
+						y: {
+							beginAtZero: true,
+							max: dynamicMaxHeight,
+							grid: {
+								color: 'rgba(255, 255, 255, 0.15)',
+								drawTicks: false
+							},
+							ticks: {
+								color: '#e4e4e7',
+								font: { family: 'ui-monospace, monospace', size: 12, weight: '600' },
+								callback: (value) => `${value} m`
+							},
+							border: { display: false }
+						}
+
+					},
+					plugins: {
+						legend: { display: false },
+						tooltip: {
+							backgroundColor: '#1f212a',
+							titleColor: '#a1a1aa',
+							bodyColor: '#ffffff',
+							bodyFont: { size: 13, weight: 'bold' },
+							borderColor: '#3f3f46',
+							borderWidth: 1.5,
+							padding: 12,
+							displayColors: false,
+							callbacks: {
+								title: (context) => {
+									const date = new Date(context[0].parsed.x);
+									return 'Time: ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+								},
+								label: (context) => `Height: ${context.parsed.y.toFixed(2)} m`
+							}
+						}
+					}
+				}
+			});
+		});
+	</script>
+</body>
+
+</html>

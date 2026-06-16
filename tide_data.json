@@ -1,0 +1,732 @@
+[
+  {
+    "date": "2026-06-01",
+    "readings": [
+      {
+        "time": "05:43",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "12:46",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "18:00",
+        "height": 1.3,
+        "classification": "L"
+      },
+      {
+        "time": "23:28",
+        "height": 2.8,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-02",
+    "readings": [
+      {
+        "time": "06:16",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "13:22",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "18:31",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-03",
+    "readings": [
+      {
+        "time": "00:01",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "06:52",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "13:58",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "19:03",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-04",
+    "readings": [
+      {
+        "time": "00:35",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "07:28",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "14:33",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "19:35",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-05",
+    "readings": [
+      {
+        "time": "01:11",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "08:07",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "15:11",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "20:13",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-06",
+    "readings": [
+      {
+        "time": "01:50",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "08:48",
+        "height": 0.4,
+        "classification": "L"
+      },
+      {
+        "time": "15:52",
+        "height": 2.3,
+        "classification": "H"
+      },
+      {
+        "time": "20:58",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-07",
+    "readings": [
+      {
+        "time": "02:33",
+        "height": 2.7,
+        "classification": "H"
+      },
+      {
+        "time": "09:33",
+        "height": 0.5,
+        "classification": "L"
+      },
+      {
+        "time": "16:37",
+        "height": 2.3,
+        "classification": "H"
+      },
+      {
+        "time": "21:52",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-08",
+    "readings": [
+      {
+        "time": "03:24",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "10:24",
+        "height": 0.6,
+        "classification": "L"
+      },
+      {
+        "time": "17:26",
+        "height": 2.3,
+        "classification": "H"
+      },
+      {
+        "time": "22:56",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-09",
+    "readings": [
+      {
+        "time": "04:30",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "11:18",
+        "height": 0.7,
+        "classification": "L"
+      },
+      {
+        "time": "18:18",
+        "height": 2.4,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-10",
+    "readings": [
+      {
+        "time": "00:05",
+        "height": 1.2,
+        "classification": "L"
+      },
+      {
+        "time": "05:58",
+        "height": 2.2,
+        "classification": "H"
+      },
+      {
+        "time": "12:20",
+        "height": 0.9,
+        "classification": "L"
+      },
+      {
+        "time": "19:07",
+        "height": 2.5,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-11",
+    "readings": [
+      {
+        "time": "01:13",
+        "height": 1,
+        "classification": "L"
+      },
+      {
+        "time": "07:30",
+        "height": 2.2,
+        "classification": "H"
+      },
+      {
+        "time": "13:24",
+        "height": 1,
+        "classification": "L"
+      },
+      {
+        "time": "19:50",
+        "height": 2.6,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-12",
+    "readings": [
+      {
+        "time": "02:13",
+        "height": 0.7,
+        "classification": "L"
+      },
+      {
+        "time": "08:52",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "14:28",
+        "height": 1.2,
+        "classification": "L"
+      },
+      {
+        "time": "20:33",
+        "height": 2.7,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-13",
+    "readings": [
+      {
+        "time": "03:05",
+        "height": 0.4,
+        "classification": "L"
+      },
+      {
+        "time": "10:05",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "15:26",
+        "height": 1.3,
+        "classification": "L"
+      },
+      {
+        "time": "21:16",
+        "height": 2.8,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-14",
+    "readings": [
+      {
+        "time": "03:52",
+        "height": 0.2,
+        "classification": "L"
+      },
+      {
+        "time": "11:09",
+        "height": 2.6,
+        "classification": "H"
+      },
+      {
+        "time": "16:18",
+        "height": 1.4,
+        "classification": "L"
+      },
+      {
+        "time": "22:00",
+        "height": 2.9,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-15",
+    "readings": [
+      {
+        "time": "04:41",
+        "height": 0,
+        "classification": "L"
+      },
+      {
+        "time": "12:09",
+        "height": 2.7,
+        "classification": "H"
+      },
+      {
+        "time": "17:09",
+        "height": 1.4,
+        "classification": "L"
+      },
+      {
+        "time": "22:46",
+        "height": 3,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-16",
+    "readings": [
+      {
+        "time": "05:31",
+        "height": -0.1,
+        "classification": "L"
+      },
+      {
+        "time": "13:03",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "18:00",
+        "height": 1.5,
+        "classification": "L"
+      },
+      {
+        "time": "23:35",
+        "height": 3.1,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-17",
+    "readings": [
+      {
+        "time": "06:26",
+        "height": -0.1,
+        "classification": "L"
+      },
+      {
+        "time": "13:56",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "18:48",
+        "height": 1.5,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-18",
+    "readings": [
+      {
+        "time": "00:26",
+        "height": 3.1,
+        "classification": "H"
+      },
+      {
+        "time": "07:22",
+        "height": -0.1,
+        "classification": "L"
+      },
+      {
+        "time": "14:43",
+        "height": 2.7,
+        "classification": "H"
+      },
+      {
+        "time": "19:37",
+        "height": 1.5,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-19",
+    "readings": [
+      {
+        "time": "01:16",
+        "height": 3.1,
+        "classification": "H"
+      },
+      {
+        "time": "08:18",
+        "height": 0.1,
+        "classification": "L"
+      },
+      {
+        "time": "15:28",
+        "height": 2.6,
+        "classification": "H"
+      },
+      {
+        "time": "20:22",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-20",
+    "readings": [
+      {
+        "time": "02:09",
+        "height": 3,
+        "classification": "H"
+      },
+      {
+        "time": "09:11",
+        "height": 0.2,
+        "classification": "L"
+      },
+      {
+        "time": "16:07",
+        "height": 2.6,
+        "classification": "H"
+      },
+      {
+        "time": "21:11",
+        "height": 1.4,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-21",
+    "readings": [
+      {
+        "time": "03:01",
+        "height": 2.8,
+        "classification": "H"
+      },
+      {
+        "time": "10:01",
+        "height": 0.5,
+        "classification": "L"
+      },
+      {
+        "time": "16:45",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "22:05",
+        "height": 1.3,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-22",
+    "readings": [
+      {
+        "time": "04:01",
+        "height": 2.6,
+        "classification": "H"
+      },
+      {
+        "time": "10:52",
+        "height": 0.7,
+        "classification": "L"
+      },
+      {
+        "time": "17:24",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "23:13",
+        "height": 1.3,
+        "classification": "L"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-23",
+    "readings": [
+      {
+        "time": "05:11",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "11:48",
+        "height": 1,
+        "classification": "L"
+      },
+      {
+        "time": "18:07",
+        "height": 2.4,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-24",
+    "readings": [
+      {
+        "time": "00:33",
+        "height": 1.1,
+        "classification": "L"
+      },
+      {
+        "time": "06:46",
+        "height": 2.2,
+        "classification": "H"
+      },
+      {
+        "time": "12:50",
+        "height": 1.2,
+        "classification": "L"
+      },
+      {
+        "time": "18:54",
+        "height": 2.4,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-25",
+    "readings": [
+      {
+        "time": "01:48",
+        "height": 1,
+        "classification": "L"
+      },
+      {
+        "time": "08:31",
+        "height": 2.1,
+        "classification": "H"
+      },
+      {
+        "time": "13:54",
+        "height": 1.4,
+        "classification": "L"
+      },
+      {
+        "time": "19:46",
+        "height": 2.4,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-26",
+    "readings": [
+      {
+        "time": "02:50",
+        "height": 0.8,
+        "classification": "L"
+      },
+      {
+        "time": "09:48",
+        "height": 2.2,
+        "classification": "H"
+      },
+      {
+        "time": "14:56",
+        "height": 1.5,
+        "classification": "L"
+      },
+      {
+        "time": "20:37",
+        "height": 2.5,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-27",
+    "readings": [
+      {
+        "time": "03:39",
+        "height": 0.6,
+        "classification": "L"
+      },
+      {
+        "time": "10:43",
+        "height": 2.3,
+        "classification": "H"
+      },
+      {
+        "time": "15:46",
+        "height": 1.5,
+        "classification": "L"
+      },
+      {
+        "time": "21:24",
+        "height": 2.5,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-28",
+    "readings": [
+      {
+        "time": "04:18",
+        "height": 0.4,
+        "classification": "L"
+      },
+      {
+        "time": "11:24",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "16:30",
+        "height": 1.5,
+        "classification": "L"
+      },
+      {
+        "time": "22:07",
+        "height": 2.6,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-29",
+    "readings": [
+      {
+        "time": "04:54",
+        "height": 0.4,
+        "classification": "L"
+      },
+      {
+        "time": "12:01",
+        "height": 2.4,
+        "classification": "H"
+      },
+      {
+        "time": "17:05",
+        "height": 1.4,
+        "classification": "L"
+      },
+      {
+        "time": "22:45",
+        "height": 2.7,
+        "classification": "H"
+      }
+    ]
+  },
+  {
+    "date": "2026-06-30",
+    "readings": [
+      {
+        "time": "05:30",
+        "height": 0.3,
+        "classification": "L"
+      },
+      {
+        "time": "12:35",
+        "height": 2.5,
+        "classification": "H"
+      },
+      {
+        "time": "17:39",
+        "height": 1.4,
+        "classification": "L"
+      },
+      {
+        "time": "23:18",
+        "height": 2.8,
+        "classification": "H"
+      }
+    ]
+  }
+]
