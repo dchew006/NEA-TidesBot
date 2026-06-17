@@ -71,13 +71,14 @@ func main() {
 func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, month, day string) error {
 	// 1. Check if localized JSON source database tracking exists for the target month
 	if _, err := os.Stat("tide_data.json"); os.IsNotExist(err) {
-		log.Printf("Data base cache missing. Launching scraper.go for %s...", month)
-		
-		cmd := exec.Command("go", "run", "scraper.go", "--month", month)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("scraper step broke: %w", err)
+			log.Printf("Data base cache missing. Launching scraper for %s...", month)
+			
+			// CHANGED: Run the compiled binary, not 'go run' which requires the Go compiler
+			cmd := exec.Command("./tide-scraper")
+			if err := cmd.Run(); err != nil {
+				return fmt.Errorf("scraper step broke: %w", err)
+			}
 		}
-	}
 
 	// 2. Call function from graphing.go directly!
 	// rawPrompt := fmt.Sprintf("%s %s", month, day)
