@@ -16,7 +16,7 @@ COPY . .
 # 1. Build the main Telegram bot binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot main.go graphing.go
 
-# 2. Build the scraper utility as its own production binary
+# 2. Build the scraper utility as its own standalone production binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o tide-scraper scraper.go
 
 # 3. Clone and build the external C solunar CLI tool from source
@@ -40,23 +40,24 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy operational HTML template 
+# Copy your operational assets verbatim
 COPY --from=builder /app/template.html .
+COPY --from=builder /app/tide_data.json . 
 
-# Copy/Initialize an empty JSON file if it doesn't exist so your os.Stat logic works gracefully
-COPY --from=builder /app/tide_data.json* ./tide_data.json
-
-# Copy compiled Go application binaries
+# Copy BOTH of your compiled Go application binaries
 COPY --from=builder /app/telegram-bot .
 COPY --from=builder /app/tide-scraper .
 
-# Copy the compiled C solunar binary straight into the directory structure graphing.go looks for
-COPY --from=builder /app/solunar/solunar ./solunar/solunar
+# --- FIX IS HERE: Match the exact folder layout your Go file looks for ---
+# Create the directory matching the relative path requirements
+RUN mkdir -p /app/solunar
+# Copy the binary directly into that relative path location
+COPY --from=builder /app/solunar/solunar /app/solunar/solunar
 
-# Direct go-rod to target the system's Chromium installation layout 
+# Direct go-rod to target the cloud instance's Chromium layout 
 ENV LAUNCHER_BIN=/usr/bin/chromium
 
-# Ensure everything has executable permissions
-RUN chmod +x ./telegram-bot ./tide-scraper ./solunar/solunar
+# Ensure execute permissions are fully preserved across all components
+RUN chmod +x /app/telegram-bot /app/tide-scraper /app/solunar/solunar
 
 CMD ["./telegram-bot"]
