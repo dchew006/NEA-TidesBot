@@ -2,7 +2,7 @@
 FROM golang:1.26-bookworm AS builder
 WORKDIR /app
 
-# Install git and compilation tools
+# Install git and C compilation build tools (gcc, make)
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
@@ -11,48 +11,52 @@ RUN apt-get update && apt-get install -y \
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy application files
 COPY . .
 
 # 1. Build the main Telegram bot binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot main.go graphing.go
 
-# 2. Build the scraper utility as its own standalone production binary
+# 2. Build the scraper utility as its own production binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o tide-scraper scraper.go
 
-# 3. Install the standard Go-based solunar CLI that outputs "Peak times : HH:MM" 
-# This matches the regex parser expectations inside graphing.go
-RUN GOBIN=/app/bin go install github.com/ScreamingHawk/solunar@latest
+# 3. Clone and build the external C solunar CLI tool from source
+RUN git clone https://github.com/kevinboone/solunar_cmdline.git /tmp/solunar_src \
+    && cd /tmp/solunar_src \
+    && make clean \
+    && make \
+    && mkdir -p /app/solunar \
+    && cp solunar /app/solunar/solunar
 
 
 # --- Runtime Stage ---
 FROM debian:bookworm-slim
 WORKDIR /app
 
-# Install Chromium, fonts, and CRITICAL tzdata for timezone alignment
+# Install Chromium and required linux graphics/font assets for headless go-rod screenshots
 RUN apt-get update && apt-get install -y \
     chromium \
     fonts-liberation \
     fontconfig \
     ca-certificates \
-    tzdata \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy operational assets
+# Copy operational HTML template 
 COPY --from=builder /app/template.html .
-# Note: If tide_data.json is missing initially, ensure your main.go successfully creates it
-# COPY --from=builder /app/tide_data.json . 
+
+# Copy/Initialize an empty JSON file if it doesn't exist so your os.Stat logic works gracefully
+COPY --from=builder /app/tide_data.json* ./tide_data.json
 
 # Copy compiled Go application binaries
 COPY --from=builder /app/telegram-bot .
 COPY --from=builder /app/tide-scraper .
 
-# Copy the compiled solunar binary straight into global system PATH
-COPY --from=builder /app/bin/solunar /usr/local/bin/solunar
+# Copy the compiled C solunar binary straight into the directory structure graphing.go looks for
+COPY --from=builder /app/solunar/solunar ./solunar/solunar
 
-# Adjust Go-Rod configuration
-# Note: Your main.go uses launcher.New(), but look at your ENV flag. 
-# Go-Rod looks for ROD_BIN, not LAUNCHER_BIN!
-ENV ROD_BIN=/usr/bin/chromium
+# Direct go-rod to target the system's Chromium installation layout 
+ENV LAUNCHER_BIN=/usr/bin/chromium
+
+# Ensure everything has executable permissions
+RUN chmod +x ./telegram-bot ./tide-scraper ./solunar/solunar
 
 CMD ["./telegram-bot"]

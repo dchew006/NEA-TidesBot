@@ -19,7 +19,7 @@ const TestOutputImage = "test_tide_chart.png"
 func main() {
 	// 1. Configure the target test parameters here
 	testMonth := "June"
-	testDay := "19"
+	testDay := "30"
 
 	fmt.Printf("⏳ Simulating pipeline execution for: %s %s...\n", testMonth, testDay)
 
