@@ -48,8 +48,8 @@ COPY --from=builder /app/tide_data.json .
 COPY --from=builder /app/telegram-bot .
 COPY --from=builder /app/tide-scraper .
 
-# --- FIX IS HERE: Match the exact folder layout your Go file looks for ---
-# Create the directory matching the relative path requirements
+# --- FIX: Match the exact folder layout your Go code looks for ---
+# Create the directory matching the relative path requirement
 RUN mkdir -p /app/solunar
 # Copy the binary directly into that relative path location
 COPY --from=builder /app/solunar/solunar /app/solunar/solunar
