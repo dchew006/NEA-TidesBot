@@ -11,7 +11,7 @@ RUN go mod download
 COPY . .
 
 # 1. Build your main bot application
-RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot .
+RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot main.go graphing.go
 
 # 2. Compile the solunar tool globally (defaults to /go/bin/solunar inside the builder)
 RUN CGO_ENABLED=0 GOOS=linux go install https://github.com/kevinboone/solunar_cmdline.git
