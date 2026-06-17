@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot main.go graphing.go
 
 # 2. Compile the solunar tool globally (defaults to /go/bin/solunar inside the builder)
-RUN CGO_ENABLED=0 GOOS=linux go install https://github.com/kevinboone/solunar_cmdline.git
+RUN CGO_ENABLED=0 GOOS=linux go install github.com/kevinboone/solunar_cmdline@latest
 
 # --- Runtime Stage ---
 FROM debian:bookworm-slim
