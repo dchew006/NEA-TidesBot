@@ -5,13 +5,15 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Tide Chart — {{.TargetDate}}</title>
-	
+
 	<script src="https://cdn.tailwindcss.com"></script>
 
 	<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 	<script src="https://cdn.jsdelivr.net/npm/date-fns@2.30.0/dist/date-fns.min.js" defer></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns" defer></script>
 	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0" defer></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"
+		defer></script>
 </head>
 
 <body class="bg-[#0b0c10] text-[#f4f4f5] flex flex-col items-center justify-center min-h-screen p-4 sm:p-8 antialiased">
@@ -21,12 +23,16 @@
 
 		<header class="mb-8 border-b border-[#1f212a] pb-6">
 			<p class="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-1">ZeroHeros Tide Charter</p>
-			<h1 class="text-4xl font-black tracking-tight text-white mb-3">Singapore Tides</h1>
-			<div class="flex items-center gap-2 text-base text-zinc-300">
-				<span>Timeline for</span>
-				<span class="bg-zinc-800 text-white font-bold px-3 py-1 rounded-md font-mono text-sm border border-zinc-600">
-					{{.TargetDate}}
-				</span>
+			<h1 class="text-4xl font-black tracking-tight text-white mb-3">Singapore Tides & Solunar Windows</h1>
+			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+				<div class="flex items-center gap-2 text-base text-zinc-300">
+					<span>Timeline for</span>
+					<span
+						class="bg-zinc-800 text-white font-bold px-3 py-1 rounded-md font-mono text-sm border border-zinc-600">
+						{{.TargetDate}}
+					</span>
+				</div>
+				<div id="solunarStatus" class="text-sm font-mono tracking-tight text-zinc-400"></div>
 			</div>
 		</header>
 
@@ -37,8 +43,8 @@
 	</div>
 
 	<script>
-		// The math and loop performance optimizations stay completely intact
 		document.addEventListener('DOMContentLoaded', () => {
+			// Explicitly register both necessary extensions
 			Chart.register(ChartDataLabels);
 
 			const payloadElement = document.getElementById('dashboard');
@@ -121,20 +127,56 @@
 				denseWaveData.push({ x: formattedTimes[arrayIdx], y: height });
 			}
 
-			// Getting the maximum height value from the wave data
 			const yValues = denseWaveData.map(point => point.y);
 			const dynamicMaxHeight = Math.round(Math.max(...yValues) + 1.0);
-
 
 			const markerData = readings.map(r => ({
 				x: `${targetDay}T${r.rawTime}:00`,
 				y: r.height
 			}));
 
+			// DYNAMIC MAP COMPILATION FOR SOLUNAR BACKGROUND SHADING
+			const annotationObjects = {};
+			const statusElement = document.getElementById('solunarStatus');
+
+			if (payload.peakTimes && payload.peakTimes.length > 0) {
+				statusElement.innerHTML = `<span class="text-amber-400 font-bold">●</span> Solunar Peak Windows Active`;
+				payload.peakTimes.forEach((peak, index) => {
+					const colorTheme = peak.type === "Major" ? "rgba(249, 115, 22, 0.15)" : "rgba(34, 197, 94, 0.15)";
+					const borderTheme = peak.type === "Major" ? "rgba(249, 115, 22, 0.4)" : "rgba(34, 197, 94, 0.4)";
+
+					annotationObjects[`peak_bg_${index}`] = {
+						type: 'box',
+						xMin: `${targetDay}T${peak.start_time}:00`,
+						xMax: `${targetDay}T${peak.end_time}:00`,
+						yMin: 0,
+						yMax: dynamicMaxHeight,
+						backgroundColor: colorTheme,
+						borderColor: borderTheme,
+						borderWidth: 1,
+						label: {
+							display: true,
+							content: `${peak.type} (${peak.time})`,
+							position: 'start',
+							color: peak.type === "Major" ? '#ffedd5' : '#dcfce7',
+							font: {
+								size: 10,
+								family: 'ui-monospace, monospace',
+								weight: 'bold'
+							},
+							yPadding: 10
+						}
+					};
+				});
+			} else {
+				// UPDATE CONTAINER IF NO SOLUNAR PEAKS ARE PRESENT
+				statusElement.innerHTML = `🌙 No active solunar peak periods today`;
+			}
+
 			const ctx = document.getElementById('tideChart').getContext('2d');
 			const oceanGradient = ctx.createLinearGradient(0, 0, 0, 400);
-			oceanGradient.addColorStop(0, 'rgba(14, 165, 233, 0.5)'); 
-			oceanGradient.addColorStop(0.7, 'rgba(14, 165, 233, 0.1)');
+			oceanGradient.addColorStop(0, 'rgba(14, 165, 233, 0.3)');
+			oceanGradient.addColorStop(0.7, 'rgba(14, 165, 233, 0.05)');
 			oceanGradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
 
 			new Chart(ctx, {
@@ -182,7 +224,7 @@
 				options: {
 					responsive: true,
 					maintainAspectRatio: false,
-					animation: false, // <-- CRITICAL
+					animation: false,
 					scales: {
 						x: {
 							type: 'time',
@@ -194,7 +236,7 @@
 							min: `${targetDay}T00:00:00`,
 							max: `${targetDay}T24:00:00`,
 							grid: {
-								color: 'rgba(255, 255, 255, 0.15)',
+								color: 'rgba(255, 255, 255, 0.1)', 'z': -1, // Draws grid lines below features
 								drawTicks: false
 							},
 							ticks: {
@@ -208,7 +250,7 @@
 							beginAtZero: true,
 							max: dynamicMaxHeight,
 							grid: {
-								color: 'rgba(255, 255, 255, 0.15)',
+								color: 'rgba(255, 255, 255, 0.1)',
 								drawTicks: false
 							},
 							ticks: {
@@ -218,10 +260,12 @@
 							},
 							border: { display: false }
 						}
-
 					},
 					plugins: {
 						legend: { display: false },
+						annotation: {
+							annotations: annotationObjects
+						},
 						tooltip: {
 							backgroundColor: '#1f212a',
 							titleColor: '#a1a1aa',

@@ -80,8 +80,8 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 	}
 
 	// 2. Call function from graphing.go directly!
-	rawPrompt := fmt.Sprintf("%s %s", month, day)
-	generatedHTMLFile, err := RenderChartForDate(rawPrompt)
+	// rawPrompt := fmt.Sprintf("%s %s", month, day)
+	generatedHTMLFile, err := RenderChartForDate(month, day)
 	if err != nil {
 		return fmt.Errorf("graphing module execution failed: %w", err)
 	}
