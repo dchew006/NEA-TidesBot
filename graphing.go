@@ -78,7 +78,7 @@ func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
 	dateArg := fmt.Sprintf("%s %s", month, day)
 	
 	// Fix the path here to point to the binary file, not the sub-directory folder!
-	cmd := exec.Command("./solunar/solunar", "-c", "singapore", "-d", dateArg, "-s")
+	cmd := exec.Command("solunar", "-c", "singapore", "-d", dateArg, "-s")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
