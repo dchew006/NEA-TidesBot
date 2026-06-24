@@ -46,14 +46,14 @@ COPY --from=builder /app/tide_data.json .
 COPY --from=builder /app/telegram-bot .
 COPY --from=builder /app/tide-scraper .
 
-# Copy BOTH the compiled solunar binary and its structural text assets from standard locations
-COPY --from=builder /usr/local/bin/solunar /usr/local/bin/solunar
-COPY --from=builder /usr/local/share/solunar /usr/local/share/solunar
+# FIXED: Copy the compiled solunar binary from /usr/bin/solunar instead of /usr/local/bin
+# (Removed the non-existent structural data folder copy block entirely)
+COPY --from=builder /usr/bin/solunar /usr/bin/solunar
 
 # Direct go-rod to target the system-installed Chromium binary
 ENV LAUNCHER_BIN=/usr/bin/chromium
 
 # Ensure all application binaries and external utilities have execution permissions
-RUN chmod +x /app/telegram-bot /app/tide-scraper /usr/local/bin/solunar
+RUN chmod +x /app/telegram-bot /app/tide-scraper /usr/bin/solunar
 
 CMD ["./telegram-bot"]
