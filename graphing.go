@@ -81,7 +81,10 @@ func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
 
 	cmd := exec.Command("solunar", "-c", "singapore", "-d", dateArg, "-s")
 	var out bytes.Buffer
+	var stderr bytes.Buffer // stderr tracker
 	cmd.Stdout = &out
+	cmd.Stderr = &stderr // stderr tracker link to stdout
+
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
