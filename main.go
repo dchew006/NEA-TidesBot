@@ -111,13 +111,49 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 	return err
 }
 
+// func captureChartSnapshot(htmlPath string) error {
+
+// 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+// 	defer cancel()
+// 	u := launcher.New().
+// 		NoSandbox(true).           // <-- CRITICAL FOR GITHUB ACTIONS
+// 		Headless(true)
+		
+// 	browser := rod.New().ControlURL(u.MustLaunch()).Context(ctx).MustConnect()
+// 	defer browser.MustClose()
+
+// 	absPath, _ := filepath.Abs(htmlPath)
+// 	page := browser.MustPage("file://" + absPath).MustWaitLoad()
+
+// 	// Snaps the high resolution DOM element matching our template architecture layout 
+// 	el := page.MustElement("#dashboard")
+// 	imgData, err := el.Screenshot(proto.PageCaptureScreenshotFormatPng, 100)
+
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return os.WriteFile(OutputImagePath, imgData, 0644)
+// }
+
 func captureChartSnapshot(htmlPath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
+
+	// 1. Grab the environment variable from your Dockerfile config
+	binPath := os.Getenv("LAUNCHER_BIN")
+	if binPath == "" {
+		// Secure default fallback case if the env variable isn't found
+		binPath = "/usr/bin/chromium" 
+	}
+
+	// 2. Initialize the launcher with the global container path
 	u := launcher.New().
-		NoSandbox(true).           // <-- CRITICAL FOR GITHUB ACTIONS
+		Bin(binPath).        // <-- FORCES GO-ROD TO USE DOCKER'S INSTALLED CHROMIUM
+		NoSandbox(true).     // <-- CRITICAL FOR GITHUB ACTIONS AND CLOUD CONTAINERS
 		Headless(true)
-		
+
+	// 3. Mount control URLs using your custom timeout context block
 	browser := rod.New().ControlURL(u.MustLaunch()).Context(ctx).MustConnect()
 	defer browser.MustClose()
 
@@ -127,7 +163,6 @@ func captureChartSnapshot(htmlPath string) error {
 	// Snaps the high resolution DOM element matching our template architecture layout 
 	el := page.MustElement("#dashboard")
 	imgData, err := el.Screenshot(proto.PageCaptureScreenshotFormatPng, 100)
-
 	if err != nil {
 		return err
 	}
