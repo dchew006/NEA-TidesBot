@@ -76,8 +76,8 @@ func minutesToTimeStr(totalMins int) string {
 
 // Fetch and parse solunar peaks for a given month and day argument
 func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
-	dateArg := fmt.Sprintf("%s %s", month, day)
-
+	dateArg := fmt.Sprintf("%s%s", month, day)
+    dateArg = strings.ReplaceAll(dateArg, " ", "")
 
 	cmd := exec.Command("solunar", "-c", "singapore", "-d", dateArg, "-s")
 	var out bytes.Buffer
