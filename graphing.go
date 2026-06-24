@@ -54,7 +54,7 @@ type TemplatePayload struct {
 	PrevHeight float64         `json:"prevHeight"`
 	NextTime   string          `json:"nextTime"`
 	NextHeight float64         `json:"nextHeight"`
-	PeakTimes  []PeakTimeBlock `json:"peakTimes"` // Injected Solunar payload array
+	PeakTimes  []PeakTimeBlock `json:"peakTimes"` //  Solunar payload array
 }
 
 func timeToMinutes(tStr string) int {
@@ -78,8 +78,8 @@ func minutesToTimeStr(totalMins int) string {
 func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
 	dateArg := fmt.Sprintf("%s %s", month, day)
 
-	// Fix the path here to point to the binary file, not the sub-directory folder!
-	cmd := exec.Command("./solunar/solunar", "-c", "singapore", "-d", dateArg, "-s")
+
+	cmd := exec.Command("solunar", "-c", "singapore", "-d", dateArg, "-s")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
