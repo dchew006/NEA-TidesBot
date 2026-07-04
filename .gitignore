@@ -14,3 +14,7 @@ telegram-bot
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Ignore compiled C binaries and object files
+solunar/solunar
+solunar/*.o
