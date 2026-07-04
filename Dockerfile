@@ -2,7 +2,7 @@
 FROM golang:1.26-bookworm AS builder
 WORKDIR /app
 
-# Install C compiler (gcc) and make to build the solunar CLI tool from source
+# Install C compiler (gcc) to build the solunar CLI tool from source
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
 COPY go.mod go.sum ./
@@ -10,8 +10,9 @@ RUN go mod download
 
 COPY . .
 
-# Compile the solunar C library specifically for Linux
-RUN cd solunar && make
+# FIX: Compile the solunar C library directly using gcc.
+# This bypasses the need for a Makefile, avoiding Git tracking issues on Railway.
+RUN cd solunar && gcc -O2 -o solunar *.c -lm
 
 # Build the Go bot (the '.' automatically includes main.go, scraper.go, and graphing.go)
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot .
