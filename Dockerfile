@@ -13,7 +13,7 @@ COPY . .
 # Clone the solunar source code directly from GitHub and compile it for Linux
 RUN git clone https://github.com/kevinboone/solunar_cmdline.git /tmp/solunar_src && \
     cd /tmp/solunar_src && \
-    gcc -O2 -o solunar *.c -lm
+    gcc -O2 -DVERSION=\"1.0\" -o solunar *.c -lm
 
 # Build the Go bot (the '.' automatically includes main.go, scraper.go, and graphing.go)
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot .
