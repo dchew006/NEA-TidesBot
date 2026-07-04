@@ -231,6 +231,7 @@
 							time: {
 								parser: "yyyy-MM-dd'T'HH:mm:ss",
 								unit: 'hour',
+								stepSize: 2,
 								displayFormats: { hour: 'HH:mm' }
 							},
 							min: `${targetDay}T00:00:00`,
@@ -242,7 +243,7 @@
 							ticks: {
 								color: '#e4e4e7',
 								font: { family: 'ui-monospace, monospace', size: 12, weight: '600' },
-								maxTicksLimit: 9
+								maxTicksLimit: 13
 							},
 							border: { display: false }
 						},
