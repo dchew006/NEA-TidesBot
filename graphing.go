@@ -89,7 +89,7 @@ func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
 	reSunset := regexp.MustCompile(`Sunset\s*:\s*(\d{2}:\d{2})`)
 	reMoonrise := regexp.MustCompile(`Moonrise\s*:\s*(\d{2}:\d{2})`)
 	reMoonset := regexp.MustCompile(`Moonset\s*:\s*(\d{2}:\d{2})`)
-	rePeaks := regexp.MustCompile(`Peak times\s*:\s*(.*)`)
+	rePeaks := regexp.MustCompile(`(?i)peak times\s*:\s*(.*)`)
 
 	getMatch := func(re *regexp.Regexp, target string) string {
 		matches := re.FindStringSubmatch(target)
