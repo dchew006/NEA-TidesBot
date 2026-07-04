@@ -1,21 +1,20 @@
-// main.go
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/proto"
-	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/go-rod/rod/lib/launcher"
+	"github.com/go-rod/rod/lib/proto"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 const OutputImagePath = "tide_chart.png"
@@ -31,7 +30,7 @@ func main() {
 		log.Panic(err)
 	}
 
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	log.Printf(" Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -45,111 +44,155 @@ func main() {
 			continue
 		}
 
+		chatID := update.Message.Chat.ID
+		msgID := update.Message.MessageID
 		text := strings.TrimSpace(update.Message.Text)
+
+		log.Printf(" Received raw text: %q", text)
+
 		matches := re.FindStringSubmatch(text)
-
-		// // debug
-		// echodebug(bot, update.Message.Chat.ID, update.Message.MessageID, update.Message.Text)
-		// log.Printf("Text: %s", text)
-		// log.Printf("Matches: %v", matches)
-
 		if len(matches) != 3 {
+			log.Printf(" Regex no match. Ignoring message.")
 			continue
 		}
 
-		month := strings.Title(strings.ToLower(matches[1]))
+		rawMonth := matches[1]
 		day := matches[2]
 
-		err := orchestrateTidePipeline(bot, update.Message.Chat.ID, update.Message.MessageID, month, day)
+		// Normalize month to full name (July, not Jul)
+		var parsedTime time.Time
+		var err error
+		if parsedTime, err = time.Parse("January", strings.ToLower(rawMonth)); err != nil {
+			if parsedTime, err = time.Parse("Jan", strings.ToLower(rawMonth)); err != nil {
+				log.Printf("❌ Invalid month format: %s", rawMonth)
+				continue
+			}
+		}
+		
+		month := strings.Title(parsedTime.Month().String())
+		log.Printf(" Parsed -> Month: %s, Day: %s", month, day)
+
+		err = orchestrateTidePipeline(bot, chatID, msgID, month, day)
 		if err != nil {
-			log.Printf("Pipeline failed for %s %s: %v", month, day, err)
-			sendHelpFallback(bot, update.Message.Chat.ID, update.Message.MessageID)
+			log.Printf("❌ Pipeline error: %v", err)
+			sendHelpFallback(bot, chatID, msgID)
 		}
 	}
 }
 
-func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, month, day string) error {
-	// 1. Check if localized JSON source database tracking exists for the target month
-	if _, err := os.Stat("tide_data.json"); os.IsNotExist(err) {
-		log.Printf("Data base cache missing. Launching scraper.go for %s...", month)
-		
-		cmd := exec.Command("go", "run", "scraper.go", "--month", month)
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("scraper step broke: %w", err)
-		}
-	}
-
-	// 2. Call function from graphing.go directly!
-	rawPrompt := fmt.Sprintf("%s %s", month, day)
-	generatedHTMLFile, err := RenderChartForDate(rawPrompt)
+func isMonthCached(filePath, requestedMonth string) bool {
+	fileData, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("graphing module execution failed: %w", err)
+		log.Printf(" isMonthCached: File read error -> %v", err)
+		return false
 	}
-	defer os.Remove(generatedHTMLFile) // Sweep temp html away post transaction
 
-	// 3. Headless Screen Capture Pipeline execution
+	var allTides []DayTide
+	if err := json.Unmarshal(fileData, &allTides); err != nil {
+		log.Printf(" isMonthCached: JSON unmarshal error -> %v", err)
+		return false
+	}
+
+	if len(allTides) == 0 {
+		log.Printf(" isMonthCached: Empty array")
+		return false
+	}
+
+	cleanDate := strings.TrimSpace(allTides[0].Date)
+	t, err := time.Parse("2006-01-02", cleanDate)
+	if err != nil {
+		log.Printf(" isMonthCached: Date parse error for '%s' -> %v", cleanDate, err)
+		return false
+	}
+
+	dataMonth := strings.ToLower(t.Month().String())
+	reqMonth := strings.ToLower(requestedMonth)
+	log.Printf(" isMonthCached: Cache='%s' | Request='%s' | Match=%v", dataMonth, reqMonth, dataMonth == reqMonth)
+	
+	return dataMonth == reqMonth
+}
+
+func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, month, day string) error {
+	log.Printf("   Step 1: Checking data cache...")
+	needsScraping := false
+
+	if _, err := os.Stat("tide_data.json"); os.IsNotExist(err) {
+		log.Printf(" Cache file missing. Launching scraper...")
+		needsScraping = true
+	} else if !isMonthCached("tide_data.json", month) {
+		log.Printf(" Cache outdated or unreadable. Launching scraper...")
+		needsScraping = true
+	} else {
+		log.Printf(" Cache valid. Skipping scraper.")
+	}
+
+	if needsScraping {
+		if err := ScrapeTides(); err != nil {
+			return fmt.Errorf("scraper failed: %w", err)
+		}
+		log.Printf("✅ Scraper completed successfully.")
+	}
+
+	log.Printf("   Step 2: Rendering chart HTML...")
+	generatedHTMLFile, err := RenderChartForDate(month, day)
+	if err != nil {
+		return fmt.Errorf("graphing failed: %w", err)
+	}
+	defer os.Remove(generatedHTMLFile)
+	log.Printf("✅ HTML rendered successfully.")
+
+	log.Printf("   Step 3: Capturing screenshot...")
 	err = captureChartSnapshot(generatedHTMLFile)
 	if err != nil {
-		return fmt.Errorf("visual render compilation failed: %w", err)
+		return fmt.Errorf("screenshot failed: %w", err)
 	}
 	defer os.Remove(OutputImagePath)
+	log.Printf("✅ Screenshot captured.")
 
-	// 4. Dispatch Image back safely to group thread
+	log.Printf(" Step 4: Sending image to Telegram...")
 	photoBytes, err := os.ReadFile(OutputImagePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read image: %w", err)
 	}
 
 	photoFile := tgbotapi.FileBytes{Name: "tide_chart.png", Bytes: photoBytes}
 	msg := tgbotapi.NewPhoto(chatID, photoFile)
 	msg.ReplyToMessageID = replyToID
-	msg.Caption = fmt.Sprintf("🌊 Singapore Tide Chart Timeline for %s %s", month, day)
+	msg.Caption = fmt.Sprintf("🌊 Singapore Tide Chart for %s %s", month, day)
 
 	_, err = bot.Send(msg)
-	return err
+	if err != nil {
+		return fmt.Errorf("failed to send photo: %w", err)
+	}
+
+	log.Printf("✅ Pipeline complete for %s %s!", month, day)
+	return nil
 }
 
 func captureChartSnapshot(htmlPath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	u := launcher.New().
-		NoSandbox(true).           // <-- CRITICAL FOR GITHUB ACTIONS
-		Headless(true)
-		
+
+	u := launcher.New().NoSandbox(true).Headless(true)
 	browser := rod.New().ControlURL(u.MustLaunch()).Context(ctx).MustConnect()
 	defer browser.MustClose()
 
 	absPath, _ := filepath.Abs(htmlPath)
 	page := browser.MustPage("file://" + absPath).MustWaitLoad()
-
-	// Snaps the high resolution DOM element matching our template architecture layout 
+	
 	el := page.MustElement("#dashboard")
 	imgData, err := el.Screenshot(proto.PageCaptureScreenshotFormatPng, 100)
-
 	if err != nil {
 		return err
 	}
-
+	
 	return os.WriteFile(OutputImagePath, imgData, 0644)
 }
 
 func sendHelpFallback(bot *tgbotapi.BotAPI, chatID int64, replyToID int) {
-	text := "❌ *Failed to generate data charts.* \n\nPlease format your requested string exactly like this: \n`tides June 15`"
-
+	text := "❌ Failed to generate data charts.\n\nPlease format your request exactly like this:\n`tides June 15`"
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeMarkdown
 	msg.ReplyToMessageID = replyToID
 	bot.Send(msg)
-}
-
-// echo debug function
-func echodebug(bot *tgbotapi.BotAPI, chatID int64, replyToID int, text string) {
-	text = fmt.Sprintf("DEBUG: `%s`", text)
-	msg := tgbotapi.NewMessage(chatID, text)
-	msg.ParseMode = tgbotapi.ModeMarkdown
-	msg.ReplyToMessageID = replyToID
-
-	if _, err := bot.Send(msg); err != nil {
-		log.Printf("Failed to send user reply back to group: %v", err)
-	}
 }
