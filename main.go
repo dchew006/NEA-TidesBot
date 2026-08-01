@@ -33,7 +33,7 @@ func main() {
 	log.Printf(" Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 120
 	updates := bot.GetUpdatesChan(u)
 
 	// Regex explicitly tracking "tides [Month] [Day]" format style
@@ -168,7 +168,7 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 }
 
 func captureChartSnapshot(htmlPath string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 
 	// run into Render memory issues so we need to use the pre-installed chromium in rod launcher
