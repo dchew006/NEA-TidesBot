@@ -150,12 +150,10 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 	log.Printf("Screenshot captured.")
 
 	log.Printf(" Step 4: Sending image to Telegram...")
-	photoBytes, err := os.ReadFile(OutputImagePath)
-	if err != nil {
-		return fmt.Errorf("failed to read image: %w", err)
-	}
 
-	photoFile := tgbotapi.FileBytes{Name: "tide_chart.png", Bytes: photoBytes}
+	log.Printf(" Sending image to Telegram")
+
+	photoFile := tgbotapi.FilePath(OutputImagePath)
 	msg := tgbotapi.NewPhoto(chatID, photoFile)
 	msg.ReplyToMessageID = replyToID
 	msg.Caption = fmt.Sprintf("🌊 Singapore Tide Chart for %s %s", month, day)
@@ -173,19 +171,63 @@ func captureChartSnapshot(htmlPath string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	u := launcher.New().NoSandbox(true).Headless(true)
-	browser := rod.New().ControlURL(u.MustLaunch()).Context(ctx).MustConnect()
+	// run into Render memory issues so we need to use the pre-installed chromium in rod launcher
+	launch := launcher.New().
+		NoSandbox(true).
+		Headless(true)
+
+	binPath := os.Getenv("LAUNCHER_BIN") // DockerFile
+
+	if binPath != "" {
+		launch.Bin(binPath).
+			Set("disable-dev-shm-usage").
+			Set("disable-gpu").
+			Set("single-process").
+			Set("no-zygote").
+			Set("renderer-process-limit", "1").
+			Set("disable-software-rasterizer")
+	} else {
+		// debugging on mac
+		if macPath, found := launcher.LookPath(); found {
+			launch.Bin(macPath)
+		}
+	}
+
+	launcherURL, err := launch.Launch()
+	if err != nil {
+		return fmt.Errorf("failed to launch chromium : %w", err)
+	}
+
+	browser := rod.New().ControlURL(launcherURL).Context(ctx)
+
+	if err := browser.Connect(); err != nil {
+		return fmt.Errorf("failed to connect to browser: %w", err)
+	}
 	defer browser.MustClose()
 
-	absPath, _ := filepath.Abs(htmlPath)
-	page := browser.MustPage("file://" + absPath).MustWaitLoad()
-	
-	el := page.MustElement("#dashboard")
+	absPath, err := filepath.Abs(htmlPath)
+	if err != nil {
+		return err
+	}
+
+	page, err := browser.Page(proto.TargetCreateTarget{URL: "file://" + absPath})
+	if err != nil {
+		return err
+	}
+	defer page.Close()
+
+	page.MustWaitLoad()
+
+	el, err := page.Element("#dashboard")
+	if err != nil {
+		return err
+	}
+
 	imgData, err := el.Screenshot(proto.PageCaptureScreenshotFormatPng, 100)
 	if err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(OutputImagePath, imgData, 0644)
 }
 

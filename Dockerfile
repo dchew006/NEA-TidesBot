@@ -54,5 +54,6 @@ RUN chmod +x ./solunar/solunar
 
 # Set environment variable pointing to the standard Chromium location
 ENV LAUNCHER_BIN=/usr/bin/chromium
+ENV CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage"
 
 CMD ["./telegram-bot"]
