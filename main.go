@@ -64,7 +64,7 @@ func main() {
 		var err error
 		if parsedTime, err = time.Parse("January", strings.ToLower(rawMonth)); err != nil {
 			if parsedTime, err = time.Parse("Jan", strings.ToLower(rawMonth)); err != nil {
-				log.Printf("❌ Invalid month format: %s", rawMonth)
+				log.Printf("Invalid month format: %s", rawMonth)
 				continue
 			}
 		}
@@ -74,7 +74,7 @@ func main() {
 
 		err = orchestrateTidePipeline(bot, chatID, msgID, month, day)
 		if err != nil {
-			log.Printf("❌ Pipeline error: %v", err)
+			log.Printf("Pipeline error: %v", err)
 			sendHelpFallback(bot, chatID, msgID)
 		}
 	}
@@ -130,7 +130,7 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 		if err := ScrapeTides(); err != nil {
 			return fmt.Errorf("scraper failed: %w", err)
 		}
-		log.Printf("✅ Scraper completed successfully.")
+		log.Printf("Scraper completed successfully.")
 	}
 
 	log.Printf("   Step 2: Rendering chart HTML...")
@@ -139,7 +139,7 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 		return fmt.Errorf("graphing failed: %w", err)
 	}
 	defer os.Remove(generatedHTMLFile)
-	log.Printf("✅ HTML rendered successfully.")
+	log.Printf("HTML rendered successfully.")
 
 	log.Printf("   Step 3: Capturing screenshot...")
 	err = captureChartSnapshot(generatedHTMLFile)
@@ -147,7 +147,7 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 		return fmt.Errorf("screenshot failed: %w", err)
 	}
 	defer os.Remove(OutputImagePath)
-	log.Printf("✅ Screenshot captured.")
+	log.Printf("Screenshot captured.")
 
 	log.Printf(" Step 4: Sending image to Telegram...")
 	photoBytes, err := os.ReadFile(OutputImagePath)
@@ -165,7 +165,7 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 		return fmt.Errorf("failed to send photo: %w", err)
 	}
 
-	log.Printf("✅ Pipeline complete for %s %s!", month, day)
+	log.Printf("Pipeline complete for %s %s!", month, day)
 	return nil
 }
 
@@ -190,7 +190,7 @@ func captureChartSnapshot(htmlPath string) error {
 }
 
 func sendHelpFallback(bot *tgbotapi.BotAPI, chatID int64, replyToID int) {
-	text := "❌ Failed to generate data charts.\n\nPlease format your request exactly like this:\n`tides June 15`"
+	text := "Failed to generate data charts.\n\nPlease format your request exactly like this:\n`tides June 15`"
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = tgbotapi.ModeMarkdown
 	msg.ReplyToMessageID = replyToID
