@@ -180,15 +180,26 @@ func RenderChartForDate(month, day string) (string, error) {
 }
 
 func parseDate(userInput string) (string, error) {
-	currentYear := time.Now().Year()
+	now := time.Now()
+	currentYear := now.Year()
 	formattedInput := strings.Title(strings.ToLower(userInput))
-	dateStr := fmt.Sprintf("%d %s", currentYear, formattedInput)
 
-	if t, err := time.Parse("2006 Jan 2", dateStr); err == nil {
+	parseWithYear := func(layout, input string) (string, error) {
+		t, err := time.Parse(layout, fmt.Sprintf("%d %s", currentYear, input))
+		if err != nil {
+			return "", err
+		}
+		if now.Month() == time.December && t.Month() == time.January {
+			t = t.AddDate(1, 0, 0)
+		}
 		return t.Format("2006-01-02"), nil
 	}
-	if t, err := time.Parse("2006 January 2", dateStr); err == nil {
-		return t.Format("2006-01-02"), nil
+
+	if res, err := parseWithYear("2006 Jan 2", formattedInput); err == nil {
+		return res, nil
+	}
+	if res, err := parseWithYear("2006 January 2", formattedInput); err == nil {
+		return res, nil
 	}
 	return "", fmt.Errorf("could not parse date %q", userInput)
 }

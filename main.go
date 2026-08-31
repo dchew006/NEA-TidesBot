@@ -98,18 +98,18 @@ func isMonthCached(filePath, requestedMonth string) bool {
 		return false
 	}
 
-	cleanDate := strings.TrimSpace(allTides[0].Date)
-	t, err := time.Parse("2006-01-02", cleanDate)
-	if err != nil {
-		log.Printf(" isMonthCached: Date parse error for '%s' -> %v", cleanDate, err)
-		return false
+	reqMonth := strings.ToLower(requestedMonth)
+	for _, dayTide := range allTides {
+		cleanDate := strings.TrimSpace(dayTide.Date)
+		t, err := time.Parse("2006-01-02", cleanDate)
+		if err == nil && strings.ToLower(t.Month().String()) == reqMonth {
+			log.Printf(" isMonthCached: Found cached data for '%s'", requestedMonth)
+			return true
+		}
 	}
 
-	dataMonth := strings.ToLower(t.Month().String())
-	reqMonth := strings.ToLower(requestedMonth)
-	log.Printf(" isMonthCached: Cache='%s' | Request='%s' | Match=%v", dataMonth, reqMonth, dataMonth == reqMonth)
-	
-	return dataMonth == reqMonth
+	log.Printf(" isMonthCached: No cache found for '%s'", requestedMonth)
+	return false
 }
 
 func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, month, day string) error {
