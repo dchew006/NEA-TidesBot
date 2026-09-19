@@ -15,45 +15,29 @@ RUN git clone https://github.com/kevinboone/solunar_cmdline.git /tmp/solunar_src
     cd /tmp/solunar_src && \
     gcc -O2 -DVERSION=\"1.0\" -o solunar *.c -lm
 
-# Build the Go bot (the '.' automatically includes main.go, scraper.go, and graphing.go)
+# Build the Go bot (pure Go native, embedded fonts)
 RUN CGO_ENABLED=0 GOOS=linux go build -o telegram-bot .
 
 # --- Runtime Stage ---
 FROM debian:bookworm-slim
 WORKDIR /app
 
-# Install Chromium, timezone data, and extra dependencies for go-rod
+# Install only essential certificates and timezone data (No Chromium or GUI libraries needed)
 RUN apt-get update && apt-get install -y \
-    chromium \
-    fonts-liberation \
-    fontconfig \
     ca-certificates \
     tzdata \
-    # Extra libs required by headless Chromium in Debian slim to prevent go-rod crashes
-    libnss3 \
-    libxss1 \
-    libasound2 \
-    libatk-bridge2.0-0 \
-    libgtk-3-0 \
-    libgbm1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Timezone to Singapore (Crucial for time.Now() logic in scraper/graphing)
 ENV TZ=Asia/Singapore
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# Copy compiled Go binary and necessary files
+# Copy compiled Go binary and data cache
 COPY --from=builder /app/telegram-bot .
-COPY --from=builder /app/template.html .
-COPY --from=builder /app/tide_data.json . 
+COPY --from=builder /app/tide_data.json .
 
-# Copy the newly compiled Linux solunar binary from the builder stage
-# We place it exactly where your graphing.go expects it: ./solunar/solunar
+# Copy the compiled Linux solunar binary from the builder stage: ./solunar/solunar
 COPY --from=builder /tmp/solunar_src/solunar ./solunar/solunar
 RUN chmod +x ./solunar/solunar
-
-# Set environment variable pointing to the standard Chromium location
-ENV LAUNCHER_BIN=/usr/bin/chromium
-ENV CHROMIUM_FLAGS="--no-sandbox --disable-dev-shm-usage"
 
 CMD ["./telegram-bot"]

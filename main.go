@@ -1,19 +1,14 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/go-rod/rod"
-	"github.com/go-rod/rod/lib/launcher"
-	"github.com/go-rod/rod/lib/proto"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -48,7 +43,8 @@ func main() {
 		msgID := update.Message.MessageID
 		text := strings.TrimSpace(update.Message.Text)
 
-		log.Printf(" Received raw text: %q", text)
+		//// Debug: log received raw text:
+		// log.Printf(" Received raw text: %q", text)
 
 		matches := re.FindStringSubmatch(text)
 		if len(matches) != 3 {
@@ -133,27 +129,16 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 		log.Printf("Scraper completed successfully.")
 	}
 
-	log.Printf("   Step 2: Rendering chart HTML...")
-	generatedHTMLFile, err := RenderChartForDate(month, day)
+	log.Printf("   Step 2: Rendering tide chart...")
+	chartPath, err := RenderChartForDate(month, day)
 	if err != nil {
 		return fmt.Errorf("graphing failed: %w", err)
 	}
-	defer os.Remove(generatedHTMLFile)
-	log.Printf("HTML rendered successfully.")
+	defer os.Remove(chartPath)
+	log.Printf("Tide chart rendered successfully.")
 
-	log.Printf("   Step 3: Capturing screenshot...")
-	err = captureChartSnapshot(generatedHTMLFile)
-	if err != nil {
-		return fmt.Errorf("screenshot failed: %w", err)
-	}
-	defer os.Remove(OutputImagePath)
-	log.Printf("Screenshot captured.")
-
-	log.Printf(" Step 4: Sending image to Telegram...")
-
-	log.Printf(" Sending image to Telegram")
-
-	photoFile := tgbotapi.FilePath(OutputImagePath)
+	log.Printf("   Step 3: Sending image to Telegram...")
+	photoFile := tgbotapi.FilePath(chartPath)
 	msg := tgbotapi.NewPhoto(chatID, photoFile)
 	msg.ReplyToMessageID = replyToID
 	msg.Caption = fmt.Sprintf("🌊 Singapore Tide Chart for %s %s", month, day)
@@ -165,70 +150,6 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 
 	log.Printf("Pipeline complete for %s %s!", month, day)
 	return nil
-}
-
-func captureChartSnapshot(htmlPath string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-
-	// run into Render memory issues so we need to use the pre-installed chromium in rod launcher
-	launch := launcher.New().
-		NoSandbox(true).
-		Headless(true)
-
-	binPath := os.Getenv("LAUNCHER_BIN") // DockerFile
-
-	if binPath != "" {
-		launch.Bin(binPath).
-			Set("disable-dev-shm-usage").
-			Set("disable-gpu").
-			Set("single-process").
-			Set("no-zygote").
-			Set("renderer-process-limit", "1").
-			Set("disable-software-rasterizer")
-	} else {
-		// debugging on mac
-		if macPath, found := launcher.LookPath(); found {
-			launch.Bin(macPath)
-		}
-	}
-
-	launcherURL, err := launch.Launch()
-	if err != nil {
-		return fmt.Errorf("failed to launch chromium : %w", err)
-	}
-
-	browser := rod.New().ControlURL(launcherURL).Context(ctx)
-
-	if err := browser.Connect(); err != nil {
-		return fmt.Errorf("failed to connect to browser: %w", err)
-	}
-	defer browser.MustClose()
-
-	absPath, err := filepath.Abs(htmlPath)
-	if err != nil {
-		return err
-	}
-
-	page, err := browser.Page(proto.TargetCreateTarget{URL: "file://" + absPath})
-	if err != nil {
-		return err
-	}
-	defer page.Close()
-
-	page.MustWaitLoad()
-
-	el, err := page.Element("#dashboard")
-	if err != nil {
-		return err
-	}
-
-	imgData, err := el.Screenshot(proto.PageCaptureScreenshotFormatPng, 100)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(OutputImagePath, imgData, 0644)
 }
 
 func sendHelpFallback(bot *tgbotapi.BotAPI, chatID int64, replyToID int) {
