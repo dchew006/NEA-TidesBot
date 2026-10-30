@@ -13,6 +13,7 @@ import (
 )
 
 const OutputImagePath = "tide_chart.png"
+const CacheFilePath = "/Users/danielchew/Projects/Telegram-Bots/nea-tides-telebot/tide_data.json"
 
 func main() {
 	token := os.Getenv("TELEGRAM_BOT_TOKEN")
@@ -48,7 +49,8 @@ func main() {
 
 		matches := re.FindStringSubmatch(text)
 		if len(matches) != 3 {
-			log.Printf(" Regex no match. Ignoring message.")
+			//// Debug: Regex match flagging
+			// log.Printf(" Regex no match. Ignoring message.")
 			continue
 		}
 
@@ -112,10 +114,10 @@ func orchestrateTidePipeline(bot *tgbotapi.BotAPI, chatID int64, replyToID int, 
 	log.Printf("   Step 1: Checking data cache...")
 	needsScraping := false
 
-	if _, err := os.Stat("tide_data.json"); os.IsNotExist(err) {
+	if _, err := os.Stat(CacheFilePath); os.IsNotExist(err) {
 		log.Printf(" Cache file missing. Launching scraper...")
 		needsScraping = true
-	} else if !isMonthCached("tide_data.json", month) {
+	} else if !isMonthCached(CacheFilePath, month) {
 		log.Printf(" Cache outdated or unreadable. Launching scraper...")
 		needsScraping = true
 	} else {

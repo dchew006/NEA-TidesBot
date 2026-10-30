@@ -6,7 +6,6 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"image/color"
 	"math"
 	"os"
@@ -27,9 +26,10 @@ import (
 var sfMonoBytes []byte
 
 const (
-	dataFile     = "tide_data.json"
+	dataFile     = "/Users/danielchew/Projects/Telegram-Bots/nea-tides-telebot/tide_data.json"
 	templateFile = "template.html"
 	outputHTML   = "tide_viewer.html"
+	solunarbin   = "/Users/danielchew/Projects/Telegram-Bots/nea-tides-telebot/solunar/solunar"
 )
 
 type TideReading struct {
@@ -154,7 +154,7 @@ func minutesToTimeStr(totalMins int) string {
 func fetchSolunarPeaks(month, day string) ([]PeakTimeBlock, error) {
 	dateArg := fmt.Sprintf("%s %s", month, day)
 
-	cmd := exec.Command("./solunar/solunar", "-c", "singapore", "-d", dateArg, "-s")
+	cmd := exec.Command(solunarbin, "-c", "singapore", "-d", dateArg, "-s")
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
@@ -649,27 +649,4 @@ func buildPayload(matchedIdx int, allTides []DayTide, targetDate string) Templat
 		}
 	}
 	return payload
-}
-
-func renderTemplate(tmplFile, outFile string, payload TemplatePayload) error {
-	tmpl, err := template.ParseFiles(tmplFile)
-	if err != nil {
-		return fmt.Errorf("failed to parse html template: %v", err)
-	}
-	out, err := os.Create(outFile)
-	if err != nil {
-		return fmt.Errorf("failed to create viewer file: %v", err)
-	}
-	defer out.Close()
-
-	payloadJSON, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload to JSON: %v", err)
-	}
-
-	templateData := map[string]interface{}{
-		"TargetDate": payload.TargetDate,
-		"Payload":    template.JS(payloadJSON),
-	}
-	return tmpl.Execute(out, templateData)
 }
